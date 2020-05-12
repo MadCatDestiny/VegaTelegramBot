@@ -1,0 +1,11 @@
+version: '3'
+services:
+  frontend:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    ports:
+      - "${PUBLIC_PORT:-5000}:80"
+    volumes:
+      - ${PWD}/config.json:/app/config.json
+    restart: unless-stopped
