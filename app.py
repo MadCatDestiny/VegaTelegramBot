@@ -3,8 +3,6 @@ import requests
 import json
 import logging
 from logging import config
-# from werkzeug.datastructures import ImmutableMultiDict
-# import telegram
 
 app = Flask(__name__)
 conf_path = '/home/bill/PycharmProjects/VegaTelegramBot/config.json'
@@ -40,7 +38,6 @@ def index():
 def web():
     try:
         app_logger.info('\n'+str(request.headers))
-        # print(request.form)
         res = dict(request.form)
         app_logger.info(res)
 
