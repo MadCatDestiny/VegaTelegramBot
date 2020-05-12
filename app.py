@@ -6,7 +6,7 @@ from logging import config
 import sys
 
 app = Flask(__name__)
-conf_path = sys.argv[1]
+conf_path = sys.argv[1] if len(sys.argv) > 1 else 'config.json'
 with open(conf_path, 'r') as f:
     cfg = json.load(f)
 
