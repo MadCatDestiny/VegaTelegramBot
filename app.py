@@ -3,9 +3,10 @@ import requests
 import json
 import logging
 from logging import config
+import sys
 
 app = Flask(__name__)
-conf_path = '/home/bill/PycharmProjects/VegaTelegramBot/config.json'
+conf_path = sys.argv[1]
 with open(conf_path, 'r') as f:
     cfg = json.load(f)
 
