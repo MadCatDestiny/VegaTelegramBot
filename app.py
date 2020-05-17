@@ -13,7 +13,6 @@ with open(conf_path, 'r') as f:
 config.dictConfig(cfg['LOGGER'])
 app_logger = logging.getLogger('default')
 
-VEGA_CHAT_ID = cfg['TELEGRAM']['chat_id']
 URL = 'https://api.telegram.org/bot{}/'.format(cfg['TELEGRAM']['token'])
 SECRET_KEY = cfg['TELEGRAM']['secret_key']
 PORT = cfg['TELEGRAM']['port']
@@ -24,31 +23,44 @@ def write_json(data, filename='answer.json'):
     with open(filename, 'w') as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 
+        
+def err_formater(errors:list):
+    res = ''
+    for item in errors:
+        res += f"ID: {item['id']} : {item['error']}\n"
+    return res
 
-def send_message(chat_id=VEGA_CHAT_ID, text='', attachemnts=None):
+
+def send_message(chat_id, text='', attachemnts=None):
     pass
+
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
     r = request.get_json()
     print(r)
-    return 'ok',200
+    if 'message' in r.keys():
+        if 'text' in r.get('message').keys():
+            if '/get_id' in r['message']['text']:
+                r = requests.post(URL + 'sendMessage', json={"chat_id":r['message']['chat']['id'], "text": r['message']['chat']['id']})#, proxies=proxy)
+    return 'ok', 200
 
 
-@app.route('/api/1.0/web/news/',methods=['POST','GET'])
+@app.route('/api/1.0/web/news/', methods=['POST','GET'])
 def web():
     try:
         app_logger.info('\n'+str(request.headers))
         res = dict(request.form)
         app_logger.info(res)
 
-
-        if 'key' not in res.keys() or 'text' not in res.keys():
+        if 'key' not in res.keys() or 'text' not in res.keys() or 'id' not in res.keys():
             app_logger.error('\nkey in args: {}\ntext in args: {}'.format('key' in res.keys(),'text' in res.keys()))
             return Response('Needed arguments not found', 403)
 
         key = res.get('key') if isinstance(res.get('key'), str) else res.get('key')[0]
         text = res.get('text') if isinstance(res.get('text'), str) else res.get('text')[0]
+        chanel_ids = res.get('id').split(',')
+
 
         if text is None:
             app_logger.warning('Body is empty')
@@ -59,13 +71,17 @@ def web():
             app_logger.info('Key is not valid')
             return Response('Key is not valid', 403)
         else:
-            r = requests.post(URL + 'sendMessage', json={"chat_id": VEGA_CHAT_ID, "text": text})
-            app_logger.info('Telergam post request: {}'.format(r.status_code))
-            if r.status_code == 200:
-                return Response('OK', 200)
+            wrong_isd = []
+            for id in chanel_ids:
+                r = requests.post(URL + 'sendMessage', json={"chat_id": id, "text": text})#, proxies=proxy)
+                app_logger.info('Telergam post request:{} : {}'.format(id, r.status_code))
+                if r.status_code != 200:
+                    app_logger.error('Telegram request error: {}, {}'.format(r.status_code, f'ID: {id} : {r.text}'))
+                    wrong_isd.append({'id': id, 'error': r.text})
+            if len(wrong_isd):
+                return Response('Telegram request error:{}'.format(err_formater(wrong_isd)), 500)
             else:
-                app_logger.error('Telegram request error: {}, {}'.format(r.status_code, r.text))
-                return Response('Telegram request error:{}'.format(r.status_code), 500)
+                return Response('OK', 200)
     except Exception as e:
         app_logger.error(e)
         return Response(str(e), 500),
