@@ -59,7 +59,7 @@ def web():
 
         key = res.get('key') if isinstance(res.get('key'), str) else res.get('key')[0]
         text = res.get('text') if isinstance(res.get('text'), str) else res.get('text')[0]
-        chanel_ids = res.get('id').split(',')
+        chanel_ids = res.get('id').split(',') if isinstance(res.get('id'),str) else res.get('id')
 
 
         if text is None:
